@@ -73,7 +73,7 @@
 
         public List<IdType> CreateFlatIndexList()
         {
-            var list = new List<IdType>(Count);
+            var list = new List<IdType>(this.Count);
 
             foreach (MetaSortTree subTree in SubTrees.Values)
             {
@@ -181,7 +181,7 @@
 
             foreach (SortedTreeNode<IdType, DataType> entity in cleanList)
             {
-                this.Add(entity.Data);
+                Add(entity.Data);
             }
         }
     }

@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28606.126
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PreferenceSortedTree", "PreferenceSortedTree\PreferenceSortedTree.csproj", "{D13F6CBD-5DB3-43E4-894F-A5612D9A1FD3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PreferenceSortedTreeTests", "PreferenceSortedTreeTests\PreferenceSortedTreeTests.csproj", "{48D0C993-EAEA-48CC-8BB3-4E20A3832743}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D13F6CBD-5DB3-43E4-894F-A5612D9A1FD3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D13F6CBD-5DB3-43E4-894F-A5612D9A1FD3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D13F6CBD-5DB3-43E4-894F-A5612D9A1FD3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D13F6CBD-5DB3-43E4-894F-A5612D9A1FD3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48D0C993-EAEA-48CC-8BB3-4E20A3832743}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48D0C993-EAEA-48CC-8BB3-4E20A3832743}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48D0C993-EAEA-48CC-8BB3-4E20A3832743}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48D0C993-EAEA-48CC-8BB3-4E20A3832743}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {02567B26-E5C0-4379-8716-0560A2987DAD}
+	EndGlobalSection
+EndGlobal
