@@ -9,9 +9,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>PreferenceSortedTree</RootNamespace>
     <AssemblyName>PreferenceSortedTree</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <LangVersion>7.3</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -41,11 +43,12 @@
   <ItemGroup>
     <Compile Include="ErrorTypes.cs" />
     <Compile Include="ISortable.cs" />
-    <Compile Include="MetaPriority.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SortedTree.cs" />
+    <Compile Include="SortedCollection.cs" />
     <Compile Include="SortedTreeNode.cs" />
+    <Compile Include="SortedTreeNodeCollection.cs" />
     <Compile Include="SortResults.cs" />
+    <Compile Include="WeightedList.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

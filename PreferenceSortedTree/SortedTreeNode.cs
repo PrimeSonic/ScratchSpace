@@ -1,4 +1,4 @@
-﻿namespace ScratchProjects.FirstPass
+﻿namespace ScratchProjects.Sorting
 {
     using System;
     using System.Collections.Generic;
@@ -7,7 +7,7 @@
         where IdType : IEquatable<IdType>, IComparable<IdType>
         where DataType : ISortable<IdType>
     {
-        public SortedTreeNode(IdType id, ISortable<IdType> data, SortedTree<IdType, DataType> tree)
+        internal SortedTreeNode(IdType id, DataType data, SortedCollection<IdType, DataType> tree)
         {
             Id = id;
             Data = data;
@@ -16,298 +16,69 @@
 
         public readonly IdType Id;
 
-        public readonly ISortable<IdType> Data;
+        public readonly DataType Data;
 
-        public readonly SortedTree<IdType, DataType> Tree;
+        public readonly SortedCollection<IdType, DataType> Tree;
 
-        public ErrorTypes Error { get; set; } = ErrorTypes.None;
+        public bool AllDependenciesPresent(ICollection<IdType> otherNodes)
+        {
+            foreach (IdType item in this.Dependencies)
+            {
+                if (!otherNodes.Contains(item))
+                    return false;
+            }
 
-        public bool HasError => this.Error != ErrorTypes.None;
+            return true;
+        }
 
-        public ICollection<IdType> Dependencies => Data.Dependencies;
+        public IList<IdType> Dependencies => Data.Dependencies;
 
-        public ICollection<IdType> LoadBeforeRequirements => Data.LoadBeforeRequirements;
+        public IList<IdType> LoadBefore => Data.LoadBefore;
 
-        public ICollection<IdType> LoadAfterRequirements => Data.LoadAfterRequirements;
+        public IList<IdType> LoadAfter => Data.LoadAfter;
 
-        internal bool HasOrdering => this.Dependencies.Count > 0 || this.LoadBeforeRequirements.Count > 0 || this.LoadAfterRequirements.Count > 0;
+        internal bool HasOrdering => this.Dependencies.Count > 0 || this.LoadBefore.Count > 0 || this.LoadAfter.Count > 0;
 
-        internal bool HasDependencies => this.Dependencies.Count > 0;
+        public bool IsLinked => NodeBefore != null || NodeAfter != null || Parent != null;
 
-        public int NodesAddedBefore { get; private set; }
-        public int NodesAddedAfter { get; private set; }
+        public SortedTreeNode<IdType, DataType> Parent;
 
-        public SortedTreeNode<IdType, DataType> Parent { get; protected set; }
+        public SortedTreeNode<IdType, DataType> NodeBefore;
 
-        public SortedTreeNode<IdType, DataType> LoadBefore { get; protected set; }
-        public SortedTreeNode<IdType, DataType> LoadAfter { get; protected set; }
+        public SortedTreeNode<IdType, DataType> NodeAfter;
 
         public void ClearLinks()
         {
-            this.Parent = null;
-            this.LoadBefore = null;
-            this.LoadAfter = null;
+            NodeBefore = null;
+            NodeAfter = null;
         }
 
-        internal bool RequiresBefore(IdType other)
+        public void SetNodeBefore(SortedTreeNode<IdType, DataType> node)
         {
-            return this.LoadBeforeRequirements.Contains(other);
+            if (ReferenceEquals(node, this))
+                return;
+
+            SortedTreeNode<IdType, DataType> slot = this;
+
+            while (slot.NodeBefore != null)
+                slot = slot.NodeBefore;
+
+            slot.NodeBefore = node;
+            node.Parent = slot;
         }
 
-        internal bool RequiresAfter(IdType other)
+        public void SetNodeAfter(SortedTreeNode<IdType, DataType> node)
         {
-            return this.LoadAfterRequirements.Contains(other);
-        }
+            if (ReferenceEquals(node, this))
+                return;
 
-        internal bool DependsOn(IdType other)
-        {
-            return this.Dependencies.Contains(other);
-        }
+            SortedTreeNode<IdType, DataType> slot = this;
 
-        internal static SortResults CompareLoadOrder(SortedTreeNode<IdType, DataType> entity, SortedTreeNode<IdType, DataType> other)
-        {
-            if (entity.HasError || other.HasError)
-            {
-                return SortResults.NoSortPreference;
-            }
+            while (slot.NodeAfter != null)
+                slot = slot.NodeAfter;
 
-            if (entity.Id.Equals(other.Id))
-            {
-                entity.Error = ErrorTypes.DuplicateId;
-                other.Error = ErrorTypes.DuplicateId;
-                return SortResults.DuplicateId;
-            }
-
-            bool entityIsDependentOnOther = entity.DependsOn(other.Id);
-            bool otherIsDependentOnEntity = other.DependsOn(entity.Id);
-
-            if (entityIsDependentOnOther && otherIsDependentOnEntity)
-            {
-                entity.Error = ErrorTypes.CircularDependency;
-                other.Error = ErrorTypes.CircularDependency;
-                return SortResults.CircularDependency;
-            }
-
-            if (entityIsDependentOnOther)
-            {
-                return SortResults.SortBefore;
-            }
-
-            if (otherIsDependentOnEntity)
-            {
-                return SortResults.SortAfter;
-            }
-
-            if (entity.RequiresBefore(other.Id) && other.RequiresBefore(entity.Id) ||
-                entity.RequiresAfter(other.Id) && other.RequiresAfter(entity.Id))
-            {
-                entity.Error = ErrorTypes.CircularLoadOrder;
-                other.Error = ErrorTypes.CircularLoadOrder;
-                return SortResults.CircularLoadOrder;
-            }
-
-            if (entity.RequiresBefore(other.Id) || other.RequiresAfter(entity.Id))
-            {
-                return NextLevelCompareBefore(entity, other);
-            }
-
-            if (entity.RequiresAfter(other.Id) || other.RequiresBefore(entity.Id))
-            {
-                return NextLevelCompareAfter(entity, other);
-            }
-
-            SortResults subResultB = SortResults.NoSortPreference;
-            SortResults subResultA = SortResults.NoSortPreference;            
-
-            if (entity.LoadBefore != null)
-            {
-                subResultB = CompareLoadOrder(entity.LoadBefore, other);
-            }
-
-            if (entity.LoadAfter != null)
-            {
-                subResultA = CompareLoadOrder(entity.LoadAfter, other);
-            }
-
-            SortResults splitCheckResult = subResultA + (int)subResultB;
-
-            return splitCheckResult <= SortResults.SortAfter 
-                ? splitCheckResult 
-                : SortResults.CircularLoadOrder;
-        }
-
-        private static SortResults NextLevelCompareAfter(SortedTreeNode<IdType, DataType> entity, SortedTreeNode<IdType, DataType> other)
-        {
-            if (entity.LoadBefore != null)
-            {
-                SortResults subResult = CompareLoadOrder(entity.LoadBefore, other);
-
-                switch (subResult)
-                {
-                    case SortResults.SortBefore:
-                        other.Error = ErrorTypes.CircularLoadOrder;
-                        entity.ChainInCircularLoadOrder();
-                        return SortResults.CircularLoadOrder;
-                    case SortResults.NoSortPreference:
-                        return SortResults.SortAfter;
-                    default:
-                        return subResult;
-                }
-            }
-
-            return SortResults.SortAfter;
-        }
-
-        private static SortResults NextLevelCompareBefore(SortedTreeNode<IdType, DataType> entity, SortedTreeNode<IdType, DataType> other)
-        {
-            if (entity.LoadAfter != null)
-            {
-                SortResults subResult = CompareLoadOrder(entity.LoadAfter, other);
-
-                switch (subResult)
-                {
-                    case SortResults.SortAfter:
-                        other.Error = ErrorTypes.CircularLoadOrder;
-                        entity.ChainInCircularLoadOrder();
-                        return SortResults.CircularLoadOrder;
-                    case SortResults.NoSortPreference:
-                        return SortResults.SortBefore;
-                    default:
-                        return subResult;
-                }
-            }
-
-            return SortResults.SortBefore;
-        }
-
-        public SortResults Sort(SortedTreeNode<IdType, DataType> other, bool testing = false)
-        {
-            SortResults topLevelResult = CompareLoadOrder(this, other);
-
-            SortResults midLevelResult = SortResults.NoSortPreference;
-            switch (topLevelResult)
-            {
-                case SortResults.DuplicateId:
-                case SortResults.CircularDependency:
-                case SortResults.CircularLoadOrder:
-                    return topLevelResult;
-                case SortResults.NoSortPreference:
-
-                    if (this.LoadBefore != null && this.LoadAfter != null)
-                    {
-                        SortResults testAfterResult = SortAfter(other, true);
-                        SortResults testBeforeResult = SortBefore(other, true);
-
-                        if (testAfterResult > SortResults.NoSortPreference)
-                        {
-                            return testAfterResult;
-                        }
-
-                        if (testBeforeResult > SortResults.NoSortPreference)
-                        {
-                            return testBeforeResult;
-                        }
-
-                        midLevelResult = testAfterResult > testBeforeResult
-                            ? testAfterResult
-                            : testBeforeResult;
-                    }
-                    else if (this.LoadBefore == null && this.LoadAfter != null)
-                    {
-                        SortResults testAfterResult = SortAfter(other, true);
-
-                        if (testAfterResult > SortResults.NoSortPreference)
-                        {
-                            return testAfterResult;
-                        }
-
-                        midLevelResult = testAfterResult;
-                    }
-                    else if (this.LoadAfter == null && this.LoadBefore != null)
-                    {
-                        SortResults testBeforeResult = SortBefore(other, true);
-
-                        if (testBeforeResult > SortResults.NoSortPreference)
-                        {
-                            return testBeforeResult;
-                        }
-
-                        midLevelResult = testBeforeResult;
-                    }
-
-                    if (midLevelResult == SortResults.NoSortPreference)
-                    {
-                        midLevelResult = SortAfter(other, testing);
-                    }
-
-                    break;
-                case SortResults.SortBefore:
-                    midLevelResult = SortBefore(other, testing);
-                    break;
-                case SortResults.SortAfter:
-                    midLevelResult = SortAfter(other, testing);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
-            if (!testing)
-            {
-                switch (midLevelResult)
-                {
-                    case SortResults.SortBefore:
-                        this.NodesAddedBefore++;
-                        break;
-                    case SortResults.SortAfter:
-                        this.NodesAddedAfter++;
-                        break;
-                }
-            }
-
-            return midLevelResult;
-        }
-
-        public SortResults SortAfter(SortedTreeNode<IdType, DataType> other, bool testing)
-        {
-            if (this.LoadAfter == null)
-            {
-                if (!testing)
-                {
-                    this.LoadAfter = other;
-                    other.Parent = this;
-                }
-
-                return SortResults.SortAfter;
-            }
-
-            return this.LoadAfter.Sort(other);
-        }
-
-        public SortResults SortBefore(SortedTreeNode<IdType, DataType> other, bool testing)
-        {
-            if (this.LoadBefore == null)
-            {
-                if (!testing)
-                {
-                    this.LoadBefore = other;
-                    other.Parent = this;
-                }
-
-                return SortResults.SortBefore;
-            }
-
-            return this.LoadBefore.Sort(other);
-        }
-
-        protected void ChainInCircularLoadOrder()
-        {
-            if (this.HasOrdering)
-            {
-                this.Error = ErrorTypes.CircularLoadOrder;
-            }
-
-            this.LoadBefore?.ChainInCircularLoadOrder();
-            this.LoadAfter?.ChainInCircularLoadOrder();
+            slot.NodeAfter = node;
+            node.Parent = slot;
         }
     }
 

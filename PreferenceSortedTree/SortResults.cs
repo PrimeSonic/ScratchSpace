@@ -1,4 +1,4 @@
-﻿namespace ScratchProjects.FirstPass
+﻿namespace ScratchProjects.Sorting
 {
     public enum SortResults : int
     {

@@ -1,4 +1,4 @@
-﻿namespace ScratchProjects.FirstPass
+﻿namespace ScratchProjects.Sorting
 {
     using System;
     using System.Collections.Generic;
@@ -8,11 +8,9 @@
     {
         IdType Id { get; }
 
-        ICollection<IdType> Dependencies { get; }
-        ICollection<IdType> LoadBeforeRequirements { get; }
-        ICollection<IdType> LoadAfterRequirements { get; }
-
-        MetaPriority MetaSortOrder { get; }
+        IList<IdType> Dependencies { get; }
+        IList<IdType> LoadBefore { get; }
+        IList<IdType> LoadAfter { get; }
     }
 
 }
