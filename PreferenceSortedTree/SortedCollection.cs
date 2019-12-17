@@ -76,43 +76,41 @@
         private SortedTreeNode<IdType, DataType> LinkNodes()
         {
             List<IdType> orderedDependencies = KnownDependencies.ToSortedList();
+            List<IdType> orderedPreferences = KnownPreferences.ToSortedList();
 
             SortedTreeNode<IdType, DataType> root = null;
-            foreach (IdType depId in orderedDependencies)
-            {
-                if (NodesToSort.TryGetValue(depId, out SortedTreeNode<IdType, DataType> node))
-                {
-                    ICollection<SortedTreeNode<IdType, DataType>> dependOn = NodesToSort.FindNodes((n) => n.Dependencies.Contains(depId));
 
-                    foreach (SortedTreeNode<IdType, DataType> item in dependOn)
+            LinkDependencies(orderedDependencies, ref root);
+
+            LinkBeforePreferences(orderedPreferences, ref root);
+
+            LinkAfterPreferences(orderedPreferences, ref root);
+
+            LinkRemaining(ref root);
+
+            return root;
+        }
+
+        private void LinkRemaining(ref SortedTreeNode<IdType, DataType> root)
+        {
+            foreach (SortedTreeNode<IdType, DataType> node in NodesToSort.Values)
+            {
+                if (!node.IsLinked)
+                {
+                    if (root == null)
                     {
-                        if (!node.IsLinked)
-                        {
-                            node.SetNodeBefore(item);
-                            root = node;
-                        }
+                        root = node;
+                    }
+                    else
+                    {
+                        root.SetNodeBefore(node);
                     }
                 }
             }
+        }
 
-            List<IdType> orderedPreferences = KnownPreferences.ToSortedList();
-            foreach (IdType depId in orderedPreferences)
-            {
-                if (NodesToSort.TryGetValue(depId, out SortedTreeNode<IdType, DataType> node))
-                {
-                    ICollection<SortedTreeNode<IdType, DataType>> dependOn = NodesToSort.FindNodes((n) => n.LoadBefore.Contains(depId) || node.LoadAfter.Contains(n.Id));
-
-                    foreach (SortedTreeNode<IdType, DataType> item in dependOn)
-                    {
-                        if (!node.IsLinked)
-                        {
-                            node.SetNodeAfter(item);
-                            root = node;
-                        }
-                    }
-                }
-            }
-
+        private void LinkAfterPreferences(List<IdType> orderedPreferences, ref SortedTreeNode<IdType, DataType> root)
+        {
             foreach (IdType depId in orderedPreferences)
             {
                 if (NodesToSort.TryGetValue(depId, out SortedTreeNode<IdType, DataType> node))
@@ -130,23 +128,46 @@
 
                 }
             }
+        }
 
-            foreach (SortedTreeNode<IdType, DataType> node in NodesToSort.Values)
+        private void LinkBeforePreferences(List<IdType> orderedPreferences, ref SortedTreeNode<IdType, DataType> root)
+        {
+            foreach (IdType depId in orderedPreferences)
             {
-                if (!node.IsLinked)
+                if (NodesToSort.TryGetValue(depId, out SortedTreeNode<IdType, DataType> node))
                 {
-                    if (root == null)
+                    ICollection<SortedTreeNode<IdType, DataType>> dependOn = NodesToSort.FindNodes((n) => n.LoadBefore.Contains(depId) || node.LoadAfter.Contains(n.Id));
+
+                    foreach (SortedTreeNode<IdType, DataType> item in dependOn)
                     {
-                        root = node;
-                    }
-                    else
-                    {
-                        root.SetNodeBefore(node);
+                        if (!node.IsLinked)
+                        {
+                            node.SetNodeAfter(item);
+                            root = node;
+                        }
                     }
                 }
             }
+        }
 
-            return root;
+        private void LinkDependencies(List<IdType> orderedDependencies, ref SortedTreeNode<IdType, DataType> root)
+        {
+            foreach (IdType depId in orderedDependencies)
+            {
+                if (NodesToSort.TryGetValue(depId, out SortedTreeNode<IdType, DataType> node))
+                {
+                    ICollection<SortedTreeNode<IdType, DataType>> dependOn = NodesToSort.FindNodes((n) => n.Dependencies.Contains(depId));
+
+                    foreach (SortedTreeNode<IdType, DataType> item in dependOn)
+                    {
+                        if (!node.IsLinked)
+                        {
+                            node.SetNodeBefore(item);
+                            root = node;
+                        }
+                    }
+                }
+            }
         }
 
         internal List<IdType> GetSortedIndexList()
